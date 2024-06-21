@@ -1,0 +1,115 @@
+import pygame
+import random
+
+# Initialize Pygame
+pygame.init()
+
+# Game Constants
+SCREEN_WIDTH = 800
+SCREEN_HEIGHT = 400
+WHITE = (255, 255, 255)
+BLACK = (0, 0, 0)
+GROUND_HEIGHT = SCREEN_HEIGHT - 50
+GRAVITY = 1
+
+# Create the screen object
+screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+pygame.display.set_caption("Dino Game")
+
+# Load assets
+dino_img = pygame.image.load("dino.png")
+dino_img = pygame.transform.scale(dino_img, (50, 50))
+cactus_img = pygame.image.load("cactus.png")
+cactus_img = pygame.transform.scale(cactus_img, (50, 50))
+
+# Dino Class
+class Dino:
+    def _init_(self):
+        self.image = dino_img
+        self.rect = self.image.get_rect()
+        self.rect.x = 50
+        self.rect.y = GROUND_HEIGHT - self.rect.height
+        self.jump_speed = 0
+        self.is_jumping = False
+
+    def jump(self):
+        if not self.is_jumping:
+            self.is_jumping = True
+            self.jump_speed = -15
+
+    def update(self):
+        if self.is_jumping:
+            self.rect.y += self.jump_speed
+            self.jump_speed += GRAVITY
+            if self.rect.y >= GROUND_HEIGHT - self.rect.height:
+                self.rect.y = GROUND_HEIGHT - self.rect.height
+                self.is_jumping = False
+
+    def draw(self, screen):
+        screen.blit(self.image, (self.rect.x, self.rect.y))
+
+# Cactus Class
+class Cactus:
+    def _init_(self):
+        self.image = cactus_img
+        self.rect = self.image.get_rect()
+        self.rect.x = SCREEN_WIDTH
+        self.rect.y = GROUND_HEIGHT - self.rect.height
+        self.speed = 10
+
+    def update(self):
+        self.rect.x -= self.speed
+        if self.rect.x < -self.rect.width:
+            self.rect.x = SCREEN_WIDTH + random.randint(50, 200)
+
+    def draw(self, screen):
+        screen.blit(self.image, (self.rect.x, self.rect.y))
+
+# Main Game Function
+def main():
+    clock = pygame.time.Clock()
+    running = True
+    dino = Dino()
+    cactuses = [Cactus()]
+    score = 0
+    font = pygame.font.Font(None, 36)
+
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_SPACE:
+                    dino.jump()
+
+        # Update game state
+        dino.update()
+        for cactus in cactuses:
+            cactus.update()
+            if dino.rect.colliderect(cactus.rect):
+                running = False  # Collision detected, end game
+
+        # Draw everything
+        screen.fill(WHITE)
+        dino.draw(screen)
+        for cactus in cactuses:
+            cactus.draw(screen)
+
+        # Update score
+        score += 1
+        score_text = font.render(f"Score: {score}", True, BLACK)
+        screen.blit(score_text, (10, 10))
+
+        pygame.display.flip()
+        clock.tick(30)
+
+    # Game Over
+    game_over_text = font.render("Game Over", True, BLACK)
+    screen.blit(game_over_text, (SCREEN_WIDTH // 2 - 50, SCREEN_HEIGHT // 2))
+    pygame.display.flip()
+    pygame.time.wait(2000)
+
+    pygame.quit()
+
+if _name_ == "_main_":
+    main()
